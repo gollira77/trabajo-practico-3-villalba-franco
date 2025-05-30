@@ -5,20 +5,35 @@ function limpiarResultados() {
   resultados.innerHTML = "";
 }
 
+function traducirAfiliacion(afiliacion) {
+  switch (afiliacion) {
+    case 'Z Fighter':
+      return 'Luchador Z';
+    case 'Frieza Force':
+      return 'Fuerza Freezer';
+    case 'God of Destruction':
+      return 'Dios de la Destrucción';
+    default:
+      return afiliacion || 'Desconocida';
+  }
+}
+
 function mostrarPersonajes(personajes) {
   personajes.forEach(personaje => {
     const tarjeta = document.createElement("div");
-    tarjeta.className = "col-md-4 mb-4";
+    tarjeta.className = "col-md-3 mb-4";
     tarjeta.innerHTML = `
-      <div class="card h-100 shadow">
-        <img src="${personaje.image}" class="card-img-top" alt="${personaje.name}">
-        <div class="card-body">
-          <h5 class="card-title">${personaje.name}</h5>
-          <p class="card-text"><strong>Raza:</strong> ${personaje.race}</p>
-          <p class="card-text"><strong>Género:</strong> ${personaje.gender}</p>
-        </div>
-      </div>
-    `;
+  <div class="tarjeta-personaje">
+    <img src="${personaje.image}" alt="${personaje.name}" />
+    <div class="contenido">
+      <h5 class="fw-bold">${personaje.name}</h5>
+      <p class="text-warning">${personaje.race} - ${personaje.gender === 'Male' ? 'Masculino' : 'Femenino'}</p>
+      <p><strong>KI base:</strong> <span class="text-warning">${personaje.ki}</span></p>
+      <p><strong>KI total:</strong> <span class="text-warning">${personaje.maxKi}</span></p>
+      <p><strong>Afiliación:</strong> <span class="text-warning">${traducirAfiliacion(personaje.affiliation)}</span></p><br>
+    </div>
+  </div>
+`;
     resultados.appendChild(tarjeta);
   });
 }
@@ -35,6 +50,28 @@ function mostrarMensaje(texto) {
 function limpiarMensajes() {
   const mensajes = document.getElementById("mensajes");
   mensajes.innerHTML = "";
+}
+
+function aplicarFiltros() {
+  limpiarMensajes();
+  limpiarResultados();
+
+  const kiMin = Number(document.getElementById("kiMin").value) || 0;
+  const kiMax = Number(document.getElementById("kiMax").value) || Infinity;
+  const afiliacionFiltro = document.getElementById("afiliacion").value.trim().toLowerCase();
+
+  const filtrados = todosLosPersonajes.filter(p => {
+    const kiOk = p.ki >= kiMin && p.ki <= kiMax;
+    const afiliacionOk = afiliacionFiltro === "" || 
+      (p.affiliation && p.affiliation.toLowerCase().includes(afiliacionFiltro));
+    return kiOk && afiliacionOk;
+  });
+
+  if (filtrados.length === 0) {
+    mostrarMensaje("No se encontraron personajes con esos filtros.");
+  } else {
+    mostrarPersonajes(filtrados);
+  }
 }
 
 async function obtenerPersonajes() {
@@ -67,7 +104,6 @@ function buscarPersonajes(nombre) {
   }
 }
 
-
 document.addEventListener("DOMContentLoaded", () => {
   const busqueda = document.getElementById("inputNombre");
   const botonBuscar = document.getElementById("buscar");
@@ -94,6 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
     limpiarResultados();
     mostrarPersonajes(todosLosPersonajes);
   });
+
+  document.getElementById("aplicarFiltro").addEventListener("click", aplicarFiltros);
 
   obtenerPersonajes();
 });

@@ -1,0 +1,52 @@
+.tarjeta-personaje {
+    position: relative;
+    background-color: rgb(65, 65, 65);
+    border-radius: 15px;
+    overflow: visible; /* permite que la imagen sobresalga */
+    height: 550px; /* ⬅️ aumentamos altura total */
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    z-index: 1;
+}
+
+
+.tarjeta-personaje img {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    width: 100%;
+    height: 400px;
+    object-fit: contain;
+    object-position: center center;
+    transition: transform 0.6s ease;
+    z-index: 200;
+}
+
+.tarjeta-personaje:hover img {
+    transform: scale(1.1);
+}
+
+.tarjeta-personaje .contenido {
+    margin-top: 400px; /* colocamos el contenido debajo de la imagen */
+    padding: 1rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    z-index: 10;
+    position: relative;
+    overflow: visible; /* ⬅️ sin scroll, todo debe mostrarse */
+}
+
+/* Texto con buen estilo */
+.tarjeta-personaje .contenido h5 {
+    margin-bottom: 0.3rem;
+}
+
+.tarjeta-personaje .contenido p {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
