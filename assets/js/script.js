@@ -6,8 +6,6 @@ function limpiarResultados() {
 }
 
 function mostrarPersonajes(personajes) {
-  limpiarResultados();
-
   personajes.forEach(personaje => {
     const tarjeta = document.createElement("div");
     tarjeta.className = "col-md-4 mb-4";
@@ -44,6 +42,7 @@ async function obtenerPersonajes() {
     const respuesta = await fetch("https://dragonball-api.com/api/characters");
     const data = await respuesta.json();
     todosLosPersonajes = data.items;
+    limpiarResultados();
     mostrarPersonajes(todosLosPersonajes);
   } catch (error) {
     mostrarMensaje("Error al obtener personajes.");
@@ -51,21 +50,23 @@ async function obtenerPersonajes() {
   }
 }
 
-async function buscarPersonajes(nombre) {
-  try {
-    const respuesta = await fetch(`https://dragonball-api.com/api/characters?name=${nombre}`);
-    const data = await respuesta.json();
+function buscarPersonajes(nombre) {
+  limpiarMensajes();
+  limpiarResultados();
 
-    if (!data || data.length === 0) {
-      mostrarMensaje("No se encontraron personajes con ese nombre.");
-    } else {
-      mostrarPersonajes(data);
-    }
-  } catch (error) {
-    mostrarMensaje("Ocurrió un error al consultar la API.");
-    console.error("Error al buscar personajes:", error);
+  const nombreBuscado = nombre.toLowerCase();
+
+  const personajesFiltrados = todosLosPersonajes.filter(personaje =>
+    personaje.name.toLowerCase().includes(nombreBuscado)
+  );
+
+  if (personajesFiltrados.length === 0) {
+    mostrarMensaje("No se encontraron personajes con ese nombre.");
+  } else {
+    mostrarPersonajes(personajesFiltrados);
   }
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const busqueda = document.getElementById("inputNombre");
@@ -78,10 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
   botonBuscar.parentNode.parentNode.appendChild(mensajes);
 
   botonBuscar.addEventListener("click", () => {
-    limpiarMensajes();
-
     const nombre = busqueda.value.trim();
     if (nombre === "") {
+      limpiarMensajes();
       mostrarMensaje("Por favor, ingresá un nombre para buscar.");
     } else {
       buscarPersonajes(nombre);
@@ -91,8 +91,9 @@ document.addEventListener("DOMContentLoaded", () => {
   botonLimpiar.addEventListener("click", () => {
     limpiarMensajes();
     busqueda.value = "";
-    mostrarPersonajes(todosLosPersonajes); 
+    limpiarResultados();
+    mostrarPersonajes(todosLosPersonajes);
   });
 
-  obtenerPersonajes(); 
+  obtenerPersonajes();
 });
