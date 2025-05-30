@@ -2,15 +2,17 @@ let todosLosPersonajes = [];
 let resultados;
 let modalPersonaje;
 let modalContenido;
+let personajesPorPagina = 20;
 let paginaActual = 1;
 let cargando = false;
 let ultimaPagina = false;
+let filtroActivo = false;
+let personajesFiltrados = [];
 
 function limpiarResultados() {
   resultados.innerHTML = "";
   paginaActual = 1;
   ultimaPagina = false;
-  todosLosPersonajes = [];
 }
 
 function traducirAfiliacion(afiliacion) {
@@ -23,7 +25,11 @@ function traducirAfiliacion(afiliacion) {
 }
 
 function mostrarPersonajes(personajes) {
-  personajes.forEach(personaje => {
+  const inicio = (paginaActual - 1) * personajesPorPagina;
+  const fin = inicio + personajesPorPagina;
+  const personajesAMostrar = personajes.slice(inicio, fin);
+
+  personajesAMostrar.forEach(personaje => {
     const tarjeta = document.createElement("div");
     tarjeta.className = "col-md-3 mb-4";
     tarjeta.innerHTML = `
@@ -45,6 +51,12 @@ function mostrarPersonajes(personajes) {
 
     resultados.appendChild(tarjeta);
   });
+
+  if (fin >= personajes.length) {
+    ultimaPagina = true;
+  } else {
+    paginaActual++;
+  }
 }
 
 function mostrarMensaje(texto) {
@@ -66,43 +78,45 @@ function aplicarFiltros() {
   const kiMax = Number(document.getElementById("kiMax").value) || Infinity;
   const afiliacionFiltro = document.getElementById("afiliacion").value.trim().toLowerCase();
 
-  const filtrados = todosLosPersonajes.filter(p => {
+  personajesFiltrados = todosLosPersonajes.filter(p => {
     const kiOk = p.ki >= kiMin && p.ki <= kiMax;
     const afiliacionOk = afiliacionFiltro === "" ||
       (p.affiliation && p.affiliation.toLowerCase().includes(afiliacionFiltro));
     return kiOk && afiliacionOk;
   });
 
-  if (filtrados.length === 0) {
+  if (personajesFiltrados.length === 0) {
     mostrarMensaje("No se encontraron personajes con esos filtros.");
   } else {
-    limpiarResultados();
-    mostrarPersonajes(filtrados);
+    filtroActivo = true;
+    mostrarPersonajes(personajesFiltrados);
   }
 }
 
-async function obtenerPersonajes(page = 1) {
-  if (cargando || ultimaPagina) return;
-  cargando = true;
+async function obtenerTodosLosPersonajes() {
+  let pagina = 1;
+  let personajes = [];
+  let continuar = true;
 
-  try {
-    const respuesta = await fetch(`https://dragonball-api.com/api/characters?limit=20&page=${page}`);
-    const data = await respuesta.json();
+  while (continuar) {
+    try {
+      const respuesta = await fetch(`https://dragonball-api.com/api/characters?limit=20&page=${pagina}`);
+      const data = await respuesta.json();
 
-    if (data.items.length === 0) {
-      ultimaPagina = true;
-      return;
+      if (data.items.length === 0) {
+        continuar = false;
+      } else {
+        personajes = personajes.concat(data.items);
+        pagina++;
+      }
+    } catch (error) {
+      mostrarMensaje("Error al obtener personajes.");
+      console.error(error);
+      continuar = false;
     }
-
-    todosLosPersonajes = [...todosLosPersonajes, ...data.items];
-    mostrarPersonajes(data.items);
-    paginaActual++;
-  } catch (error) {
-    mostrarMensaje("Error al obtener personajes.");
-    console.error(error);
-  } finally {
-    cargando = false;
   }
+
+  return personajes;
 }
 
 function buscarPersonajes(nombre) {
@@ -110,13 +124,14 @@ function buscarPersonajes(nombre) {
   limpiarResultados();
 
   const nombreBuscado = nombre.toLowerCase();
-  const personajesFiltrados = todosLosPersonajes.filter(p =>
+  personajesFiltrados = todosLosPersonajes.filter(p =>
     p.name.toLowerCase().includes(nombreBuscado)
   );
 
   if (personajesFiltrados.length === 0) {
     mostrarMensaje("No se encontraron personajes con ese nombre.");
   } else {
+    filtroActivo = true;
     mostrarPersonajes(personajesFiltrados);
   }
 }
@@ -142,7 +157,7 @@ function abrirModalPersonaje(personaje) {
   modalPersonaje.show();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const busqueda = document.getElementById("inputNombre");
   const botonBuscar = document.getElementById("buscar");
   const botonLimpiar = document.getElementById("limpiar");
@@ -168,17 +183,26 @@ document.addEventListener("DOMContentLoaded", () => {
   botonLimpiar.addEventListener("click", () => {
     limpiarMensajes();
     busqueda.value = "";
+    document.getElementById("kiMin").value = "";
+    document.getElementById("kiMax").value = "";
+    document.getElementById("afiliacion").value = "";
     limpiarResultados();
-    obtenerPersonajes(1);
+    filtroActivo = false;
+    mostrarPersonajes(todosLosPersonajes);
   });
 
   document.getElementById("aplicarFiltro").addEventListener("click", aplicarFiltros);
 
   window.addEventListener("scroll", () => {
-    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-      obtenerPersonajes(paginaActual);
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 && !ultimaPagina) {
+      if (filtroActivo) {
+        mostrarPersonajes(personajesFiltrados);
+      } else {
+        mostrarPersonajes(todosLosPersonajes);
+      }
     }
   });
 
-  obtenerPersonajes();
+  todosLosPersonajes = await obtenerTodosLosPersonajes();
+  mostrarPersonajes(todosLosPersonajes);
 });
