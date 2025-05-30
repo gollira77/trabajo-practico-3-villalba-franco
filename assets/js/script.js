@@ -1,5 +1,7 @@
 let todosLosPersonajes = [];
 let resultados;
+let modalPersonaje;
+let modalContenido;
 
 function limpiarResultados() {
   resultados.innerHTML = "";
@@ -19,21 +21,28 @@ function traducirAfiliacion(afiliacion) {
 }
 
 function mostrarPersonajes(personajes) {
+  resultados.innerHTML = ""; 
+
   personajes.forEach(personaje => {
     const tarjeta = document.createElement("div");
     tarjeta.className = "col-md-3 mb-4";
     tarjeta.innerHTML = `
-  <div class="tarjeta-personaje">
-    <img src="${personaje.image}" alt="${personaje.name}" />
-    <div class="contenido">
-      <h5 class="fw-bold">${personaje.name}</h5>
-      <p class="text-warning">${personaje.race} - ${personaje.gender === 'Male' ? 'Masculino' : 'Femenino'}</p>
-      <p><strong>KI base:</strong> <span class="text-warning">${personaje.ki}</span></p>
-      <p><strong>KI total:</strong> <span class="text-warning">${personaje.maxKi}</span></p>
-      <p><strong>Afiliación:</strong> <span class="text-warning">${traducirAfiliacion(personaje.affiliation)}</span></p><br>
-    </div>
-  </div>
-`;
+      <div class="tarjeta-personaje" style="cursor:pointer;">
+        <img src="${personaje.image}" alt="${personaje.name}" />
+        <div class="contenido">
+          <h5 class="fw-bold">${personaje.name}</h5>
+          <p class="text-warning">${personaje.race} - ${personaje.gender === 'Male' ? 'Masculino' : 'Femenino'}</p>
+          <p><strong>KI base:</strong> <span class="text-warning">${personaje.ki}</span></p>
+          <p><strong>KI total:</strong> <span class="text-warning">${personaje.maxKi}</span></p>
+          <p><strong>Afiliación:</strong> <span class="text-warning">${traducirAfiliacion(personaje.affiliation)}</span></p><br>
+        </div>
+      </div>
+    `;
+
+    tarjeta.querySelector(".tarjeta-personaje").addEventListener("click", () => {
+      abrirModalPersonaje(personaje);
+    });
+
     resultados.appendChild(tarjeta);
   });
 }
@@ -104,6 +113,27 @@ function buscarPersonajes(nombre) {
   }
 }
 
+function abrirModalPersonaje(personaje) {
+  modalContenido.innerHTML = `
+    <div class="row">
+      <div class="col-md-5 text-center mb-3">
+        <img src="${personaje.image}" alt="${personaje.name}" class="img-fluid rounded" />
+      </div>
+      <div class="col-md-7">
+        <h3>${personaje.name}</h3>
+        <p><strong>Raza:</strong> ${personaje.race || "Desconocida"}</p>
+        <p><strong>Género:</strong> ${personaje.gender === 'Male' ? 'Masculino' : 'Femenino'}</p>
+        <p><strong>KI base:</strong> ${personaje.ki}</p>
+        <p><strong>KI total:</strong> ${personaje.maxKi}</p>
+        <p><strong>Afiliación:</strong> ${traducirAfiliacion(personaje.affiliation)}</p>
+        <p><strong>Descripción:</strong> ${personaje.description || 'No disponible'}</p>
+      </div>
+    </div>
+  `;
+
+  modalPersonaje.show();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const busqueda = document.getElementById("inputNombre");
   const botonBuscar = document.getElementById("buscar");
@@ -113,6 +143,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let mensajes = document.createElement("div");
   mensajes.id = "mensajes";
   botonBuscar.parentNode.parentNode.appendChild(mensajes);
+
+  modalPersonaje = new bootstrap.Modal(document.getElementById('modalPersonaje'));
+  modalContenido = document.getElementById('modalContenido');
 
   botonBuscar.addEventListener("click", () => {
     const nombre = busqueda.value.trim();
