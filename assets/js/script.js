@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const busqueda = document.getElementById("inputNombre");
   const boton = document.getElementById("buscar");
+  const resultados = document.getElementById("resultados");
 
   let mensajes = document.createElement("div");
   mensajes.id = "mensajes";
@@ -12,6 +13,26 @@ document.addEventListener("DOMContentLoaded", () => {
         ${texto}
       </div>
     `;
+  }
+
+  function mostrarPersonajes(personajes) {
+    resultados.innerHTML = "";
+
+    personajes.forEach(personaje => {
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "col-md-4 mb-4";
+      tarjeta.innerHTML = `
+        <div class="card h-100 shadow">
+          <img src="${personaje.image}" class="card-img-top" alt="${personaje.name}">
+          <div class="card-body">
+            <h5 class="card-title">${personaje.name}</h5>
+            <p class="card-text"><strong>Raza:</strong> ${personaje.race}</p>
+            <p class="card-text"><strong>Género:</strong> ${personaje.gender}</p>
+          </div>
+        </div>
+      `;
+      resultados.appendChild(tarjeta);
+    });
   }
 
   function limpiar() {
