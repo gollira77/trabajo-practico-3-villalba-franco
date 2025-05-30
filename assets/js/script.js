@@ -25,6 +25,20 @@ function mostrarPersonajes(personajes) {
   });
 }
 
+function mostrarMensaje(texto) {
+  const mensajes = document.getElementById("mensajes");
+  mensajes.innerHTML = `
+    <div class="alert alert-danger mt-3 mb-0" role="alert">
+      ${texto}
+    </div>
+  `;
+}
+
+function limpiarMensajes() {
+  const mensajes = document.getElementById("mensajes");
+  mensajes.innerHTML = "";
+}
+
 async function obtenerPersonajes() {
   try {
     const respuesta = await fetch("https://dragonball-api.com/api/characters");
@@ -37,36 +51,47 @@ async function obtenerPersonajes() {
   }
 }
 
+async function buscarPersonajes(nombre) {
+  try {
+    const respuesta = await fetch(`https://dragonball-api.com/api/characters?name=${nombre}`);
+    const data = await respuesta.json();
+
+    if (!data || data.length === 0) {
+      mostrarMensaje("No se encontraron personajes con ese nombre.");
+    } else {
+      mostrarPersonajes(data);
+    }
+  } catch (error) {
+    mostrarMensaje("Ocurrió un error al consultar la API.");
+    console.error("Error al buscar personajes:", error);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const busqueda = document.getElementById("inputNombre");
-  const boton = document.getElementById("buscar");
+  const botonBuscar = document.getElementById("buscar");
+  const botonLimpiar = document.getElementById("limpiar");
   resultados = document.getElementById("resultados");
 
   let mensajes = document.createElement("div");
   mensajes.id = "mensajes";
-  boton.parentNode.parentNode.appendChild(mensajes);
+  botonBuscar.parentNode.parentNode.appendChild(mensajes);
 
-  function mostrarMensaje(texto) {
-    mensajes.innerHTML = `
-      <div class="alert alert-danger mt-3 mb-0" role="alert">
-        ${texto}
-      </div>
-    `;
-  }
-
-  function limpiarMensajes() {
-    mensajes.innerHTML = "";
-  }
-
-  boton.addEventListener("click", () => {
+  botonBuscar.addEventListener("click", () => {
     limpiarMensajes();
-    const nombre = busqueda.value.trim();
 
+    const nombre = busqueda.value.trim();
     if (nombre === "") {
       mostrarMensaje("Por favor, ingresá un nombre para buscar.");
     } else {
-      mostrarMensaje("Ocurrió un error al consultar la api");
+      buscarPersonajes(nombre);
     }
+  });
+
+  botonLimpiar.addEventListener("click", () => {
+    limpiarMensajes();
+    busqueda.value = "";
+    mostrarPersonajes(todosLosPersonajes); 
   });
 
   obtenerPersonajes(); 
