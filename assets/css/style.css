@@ -12,6 +12,9 @@
     z-index: 1;
 }
 
+.custom-color {
+    color: #f59e0b;
+}
 
 .tarjeta-personaje img {
     position: absolute;

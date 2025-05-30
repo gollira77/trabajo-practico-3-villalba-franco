@@ -2,27 +2,27 @@ let todosLosPersonajes = [];
 let resultados;
 let modalPersonaje;
 let modalContenido;
+let paginaActual = 1;
+let cargando = false;
+let ultimaPagina = false;
 
 function limpiarResultados() {
   resultados.innerHTML = "";
+  paginaActual = 1;
+  ultimaPagina = false;
+  todosLosPersonajes = [];
 }
 
 function traducirAfiliacion(afiliacion) {
   switch (afiliacion) {
-    case 'Z Fighter':
-      return 'Luchador Z';
-    case 'Frieza Force':
-      return 'Fuerza Freezer';
-    case 'God of Destruction':
-      return 'Dios de la Destrucción';
-    default:
-      return afiliacion || 'Desconocida';
+    case 'Z Fighter': return 'Luchador Z';
+    case 'Frieza Force': return 'Fuerza Freezer';
+    case 'God of Destruction': return 'Dios de la Destrucción';
+    default: return afiliacion || 'Desconocida';
   }
 }
 
 function mostrarPersonajes(personajes) {
-  resultados.innerHTML = ""; 
-
   personajes.forEach(personaje => {
     const tarjeta = document.createElement("div");
     tarjeta.className = "col-md-3 mb-4";
@@ -50,15 +50,12 @@ function mostrarPersonajes(personajes) {
 function mostrarMensaje(texto) {
   const mensajes = document.getElementById("mensajes");
   mensajes.innerHTML = `
-    <div class="alert alert-danger mt-3 mb-0" role="alert">
-      ${texto}
-    </div>
+    <div class="alert alert-danger mt-3 mb-0" role="alert">${texto}</div>
   `;
 }
 
 function limpiarMensajes() {
-  const mensajes = document.getElementById("mensajes");
-  mensajes.innerHTML = "";
+  document.getElementById("mensajes").innerHTML = "";
 }
 
 function aplicarFiltros() {
@@ -71,7 +68,7 @@ function aplicarFiltros() {
 
   const filtrados = todosLosPersonajes.filter(p => {
     const kiOk = p.ki >= kiMin && p.ki <= kiMax;
-    const afiliacionOk = afiliacionFiltro === "" || 
+    const afiliacionOk = afiliacionFiltro === "" ||
       (p.affiliation && p.affiliation.toLowerCase().includes(afiliacionFiltro));
     return kiOk && afiliacionOk;
   });
@@ -79,20 +76,32 @@ function aplicarFiltros() {
   if (filtrados.length === 0) {
     mostrarMensaje("No se encontraron personajes con esos filtros.");
   } else {
+    limpiarResultados();
     mostrarPersonajes(filtrados);
   }
 }
 
-async function obtenerPersonajes() {
+async function obtenerPersonajes(page = 1) {
+  if (cargando || ultimaPagina) return;
+  cargando = true;
+
   try {
-    const respuesta = await fetch("https://dragonball-api.com/api/characters");
+    const respuesta = await fetch(`https://dragonball-api.com/api/characters?limit=20&page=${page}`);
     const data = await respuesta.json();
-    todosLosPersonajes = data.items;
-    limpiarResultados();
-    mostrarPersonajes(todosLosPersonajes);
+
+    if (data.items.length === 0) {
+      ultimaPagina = true;
+      return;
+    }
+
+    todosLosPersonajes = [...todosLosPersonajes, ...data.items];
+    mostrarPersonajes(data.items);
+    paginaActual++;
   } catch (error) {
     mostrarMensaje("Error al obtener personajes.");
     console.error(error);
+  } finally {
+    cargando = false;
   }
 }
 
@@ -101,9 +110,8 @@ function buscarPersonajes(nombre) {
   limpiarResultados();
 
   const nombreBuscado = nombre.toLowerCase();
-
-  const personajesFiltrados = todosLosPersonajes.filter(personaje =>
-    personaje.name.toLowerCase().includes(nombreBuscado)
+  const personajesFiltrados = todosLosPersonajes.filter(p =>
+    p.name.toLowerCase().includes(nombreBuscado)
   );
 
   if (personajesFiltrados.length === 0) {
@@ -140,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const botonLimpiar = document.getElementById("limpiar");
   resultados = document.getElementById("resultados");
 
-  let mensajes = document.createElement("div");
+  const mensajes = document.createElement("div");
   mensajes.id = "mensajes";
   botonBuscar.parentNode.parentNode.appendChild(mensajes);
 
@@ -161,10 +169,16 @@ document.addEventListener("DOMContentLoaded", () => {
     limpiarMensajes();
     busqueda.value = "";
     limpiarResultados();
-    mostrarPersonajes(todosLosPersonajes);
+    obtenerPersonajes(1);
   });
 
   document.getElementById("aplicarFiltro").addEventListener("click", aplicarFiltros);
+
+  window.addEventListener("scroll", () => {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+      obtenerPersonajes(paginaActual);
+    }
+  });
 
   obtenerPersonajes();
 });
